@@ -1,0 +1,839 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>AeroPlan 0.3 — Drone Community & Mission Planner</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{
+  --bg:#f4f7f9;--card:#fff;--ink:#17212b;--muted:#687684;--line:#dce3e8;
+  --dark:#111820;--blue:#2563eb;--teal:#0f766e;--ok:#15803d;--warn:#b45309;--bad:#b91c1c;
+  --photo:#7c3aed;--spot:#d97706;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;color:var(--ink)}
+.app{max-width:1120px;margin:auto;padding:12px 12px 92px}
+.hero{background:linear-gradient(135deg,#0d141b,#1f2f3d 65%,#446274);color:#fff;border-radius:22px;padding:20px;box-shadow:0 12px 30px #0002}
+.hero h1{margin:0;font-size:26px}.hero p{margin:6px 0 0;color:#e5edf3}.hero .tag{display:inline-block;margin-top:9px;padding:5px 9px;border-radius:999px;background:#ffffff20;font-size:12px;font-weight:900}
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin:12px 0}
+.tab,.btn{border:0;border-radius:12px;padding:12px;font:inherit;font-weight:850;cursor:pointer}
+.tab{background:#dfe6eb}.tab.on{background:#121923;color:#fff}
+.btn.primary{background:#121923;color:#fff}.btn.blue{background:var(--blue);color:#fff}.btn.teal{background:var(--teal);color:#fff}
+.btn.soft{background:#e5e7eb;color:#111827}.btn.good{background:#166534;color:#fff}.btn.danger{background:#fee2e2;color:#991b1b}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;margin-top:11px;box-shadow:0 2px 8px #0000000b}
+.card h2{font-size:19px;margin:0 0 12px}.card h3{font-size:15px;margin:0 0 8px}
+.grid{display:grid;grid-template-columns:1fr;gap:10px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+label{display:block;font-size:12px;color:var(--muted);font-weight:850;margin-bottom:5px}
+input,select,textarea{width:100%;padding:11px 12px;border:1px solid #cbd5df;border-radius:11px;background:#fff;font:inherit}
+textarea{min-height:86px;resize:vertical}
+.small{font-size:12px;color:var(--muted);line-height:1.45}.hidden{display:none!important}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}
+.info{background:#f8fafc;border-left:4px solid #64748b;border-radius:10px;padding:10px;margin-top:10px;font-size:13px}
+.warnbox{background:#fff7ed;border-left-color:#f59e0b}.dangerbox{background:#fef2f2;border-left-color:#dc2626}.okbox{background:#f0fdf4;border-left-color:#16a34a}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+.k{background:#fafbfc;border:1px solid var(--line);border-radius:14px;padding:11px}.k span{font-size:11px;color:var(--muted);font-weight:850;text-transform:uppercase}.k b{display:block;font-size:21px;margin-top:2px}
+.status{font-size:34px;font-weight:1000;text-align:center;margin:10px 0}.safe{color:var(--ok)}.tight{color:var(--warn)}.bad{color:var(--bad)}
+#planMap,#exploreMap{height:330px;border-radius:15px;border:1px solid var(--line);overflow:hidden}
+.profile,.post,.spot{border:1px solid var(--line);border-radius:15px;padding:11px;margin-top:9px;background:#fbfcfd}
+.profile.active{outline:2px solid var(--blue)}
+.specs{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}.spec{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:9px}.spec span{font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:850}.spec b{display:block;margin-top:2px}
+.layerbar{display:flex;gap:8px;overflow:auto;padding-bottom:4px}.chip{white-space:nowrap;border:1px solid #ccd5dc;background:#fff;border-radius:999px;padding:8px 10px;font-size:12px;font-weight:850;cursor:pointer}.chip.on{background:#111827;color:#fff;border-color:#111827}
+.post img{width:100%;max-height:360px;object-fit:cover;border-radius:12px;margin:8px 0}
+.meta{display:flex;gap:8px;flex-wrap:wrap}.badge{display:inline-block;padding:5px 8px;border-radius:999px;background:#e8eef5;font-size:11px;font-weight:850}.badge.photo{background:#ede9fe;color:#6d28d9}.badge.alert{background:#fee2e2;color:#991b1b}.badge.spot{background:#ffedd5;color:#9a3412}
+.modal{position:fixed;inset:0;background:#000a;display:flex;align-items:center;justify-content:center;padding:16px;z-index:9999}.modalbox{max-width:680px;width:100%;background:#fff;border-radius:18px;padding:18px;max-height:90vh;overflow:auto;box-shadow:0 20px 50px #0006}
+.preview{width:100%;max-height:260px;object-fit:cover;border-radius:12px;border:1px solid var(--line);margin-top:8px}
+.footer{margin-top:14px;padding:12px;color:#6b7280;font-size:11px;text-align:center}
+@media(min-width:760px){.grid{grid-template-columns:1fr 1fr}.kpis{grid-template-columns:repeat(4,1fr)}.specs{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:720px){.tabs{grid-template-columns:repeat(2,1fr)}}
+
+.drone-logo{display:flex;align-items:center;gap:14px;margin-top:10px}
+.drone-icon{position:relative;width:92px;height:72px;flex:0 0 auto}
+.drone-body{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:28px;height:18px;background:#e5edf3;border-radius:10px;box-shadow:inset 0 -2px 0 #b9c6d3}
+.drone-arm{position:absolute;width:28px;height:3px;background:#dce7f1;left:50%;top:50%;transform-origin:left center;border-radius:3px}
+.arm1{transform:translate(-4px,-2px) rotate(28deg)}
+.arm2{transform:translate(-24px,-2px) rotate(152deg)}
+.arm3{transform:translate(-4px,-2px) rotate(-28deg)}
+.arm4{transform:translate(-24px,-2px) rotate(-152deg)}
+.rotor{position:absolute;width:18px;height:18px;border:2px solid #ffffff;border-radius:50%;animation:spin 1.1s linear infinite;box-shadow:0 0 0 2px #ffffff18}
+.r1{left:6px;top:8px}.r2{right:6px;top:8px}.r3{left:6px;bottom:8px}.r4{right:6px;bottom:8px}
+.rotor:before,.rotor:after{content:"";position:absolute;left:50%;top:50%;width:16px;height:2px;background:#ffffff;border-radius:3px;transform-origin:center}
+.rotor:before{transform:translate(-50%,-50%) rotate(0deg)}
+.rotor:after{transform:translate(-50%,-50%) rotate(90deg)}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.hero-flex{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.hero-text{min-width:240px;flex:1 1 320px}
+.userbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.userpill{display:inline-block;padding:6px 10px;border-radius:999px;background:#ffffff18;font-size:12px;font-weight:800}
+.loginbox .actions{grid-template-columns:1fr 1fr}
+
+
+.brand-title{display:flex;align-items:center;gap:10px;margin:0}
+.brand-drone{position:relative;width:43px;height:30px;display:inline-block;flex:0 0 43px}
+.brand-drone .bd-body{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:15px;height:10px;background:#edf3f7;border-radius:7px}
+.brand-drone .bd-arm{position:absolute;left:50%;top:50%;width:15px;height:2px;background:#dce6ee;transform-origin:left center;border-radius:2px}
+.brand-drone .a1{transform:translate(-2px,-1px) rotate(28deg)}
+.brand-drone .a2{transform:translate(-13px,-1px) rotate(152deg)}
+.brand-drone .a3{transform:translate(-2px,-1px) rotate(-28deg)}
+.brand-drone .a4{transform:translate(-13px,-1px) rotate(-152deg)}
+.brand-drone .bd-rotor{position:absolute;width:10px;height:10px;border:1.5px solid #fff;border-radius:50%;animation:bdspin .8s linear infinite}
+.brand-drone .r1{left:1px;top:1px}.brand-drone .r2{right:1px;top:1px}.brand-drone .r3{left:1px;bottom:1px}.brand-drone .r4{right:1px;bottom:1px}
+.brand-drone .bd-rotor:before{content:"";position:absolute;left:50%;top:50%;width:9px;height:1.5px;background:#fff;border-radius:2px;transform:translate(-50%,-50%)}
+@keyframes bdspin{to{transform:rotate(360deg)}}
+
+
+.brand-logo-wrap{display:flex;align-items:center;margin:0 0 4px 0}
+.brand-logo-img{width:min(290px,85vw);height:auto;display:block;filter:drop-shadow(0 6px 14px rgba(0,0,0,.28));}
+
+
+.beta-ribbon{display:inline-flex;gap:8px;align-items:center;margin-top:10px;padding:7px 10px;border-radius:999px;background:#0f172a;color:#fff;font-size:12px;font-weight:900}.beta-count{background:#ffffff20;padding:2px 7px;border-radius:999px}.admin-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.admin-card{background:#f8fafc;border:1px solid #dbe3ea;border-radius:14px;padding:12px}.admin-card span{font-size:11px;color:#64748b;font-weight:850;text-transform:uppercase}.admin-card b{display:block;font-size:24px;margin-top:3px}.tablewrap{overflow:auto;border:1px solid #e5e7eb;border-radius:12px}table{border-collapse:collapse;width:100%;min-width:760px;background:#fff}th,td{padding:10px;border-bottom:1px solid #edf0f3;text-align:left;font-size:12px}th{background:#f8fafc;color:#475569}.status-pill{display:inline-block;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:900}.st-active{background:#dcfce7;color:#166534}.st-blocked{background:#fee2e2;color:#991b1b}.st-invite{background:#dbeafe;color:#1d4ed8}.st-expired{background:#f3f4f6;color:#6b7280}.invite-code{font-family:monospace;background:#111827;color:#fff;border-radius:8px;padding:4px 7px}@media(min-width:760px){.admin-grid{grid-template-columns:repeat(4,1fr)}}
+</style>
+<link rel="icon" type="image/png" href="data:image/webp;base64,UklGRsYTAABXRUJQVlA4ILoTAABQfACdASoIAoYBPmEwlUgkIqIhIdIooIAMCWdu+EuU/JITLCvj6++RvzPyg6nLsHw58iuIJ3pmr9AP6n+ue0b/b/772qflz/Ve4B+kX63+t37JvMB/KP7B+0XvJ/1v9ZvdF/zvUA/rP9i///t/+p16A37d+mh+1Hwj/uL+0/tE/97WNPMHZt/j+m09oe4HNI6v7d/7fhl+JOoF+Ofz//RfmHxzet+Y17K/Xv+Z4iWrj1Ve4B+r/GdUAP0H5+P1f6AP0T/Wf/D/T/Aj/Mv7Z1vfSDDPlehpI4UTSRwomkjhRNJG+ulb48r0NJHCiaSOFUqTD3x5XoaSOFE0kcKJpI4UTSRwomkjhRNJHCiaSOFE0kcKJpI4UTSRwomkjhVKkjhRNJHCiaSOFE0kcKJpI4UTSRwomkjhRNJHCiaSOFE0kcKJpI4UTSRwomo6V02G6uBjnmd0D2rvlvjyvQ0kcKJmTwQuzggNqRXkmhzlm5OFH6WUCQyJAtJtDV0+QXyur/Pl5o0YJNKUn+NR6gMzqrsMDnx5XoaSOFEjo8tFAnyGQpvmGkKIf6lYdj+Ja7Ws9JUHqvJAdmR/k05r3Hbv9eRVgC7X0LTv3DHXNp7/u7gtiBwKq3kk4Fney95eWVvjyvQ0jxM6WI1Qihx3f6Z+1H03lF6G04VJ5R216aGyJvWQ5a9mZCnNlt7aZtrpbyyHzCHvm9OBhOV0zH3Y0IyntECm+Vi1GgbpidiDYAY60xMwsyAcV9CHfYiCMSX1UVipzR+Y7rHGDsr8vXH+lbrbAn0SGGhyZjYH5aprLk3ul6MTvd9+TaJfDNCJPFTqKrebO7jUP7DKaJgc1IUTuI7tnjtTDEMhLkxKRX/KZgqU8WhNAEibLkhXsl1r3XXtDcuZJWdcl9z9dYhg8yXcodzW8voYEJmANqTzaqfcf56reUiDyvVWN72qnR//7G4V0hsinTNTY69otUOuWlh2u+319P8/LZVeEC+5ye1tPtDeibnfai/e6hMyZU7bvbf/gob7hvct0IAlyFWCFyrtj8+eSWpJDvMA9QjerPKI+XIqTNpoRyyApbS06R9bLENMpbWvmYYGZyfrSXJqLL6V6FCivu6BiAP/Hmr2EP1Mh4RNMM2JuE2vBExJC4E2ksPv0rfHlehpI4UTSRwomkjhRNJHCiaSOFE0kcKJpI4UTSRwomkjhRNJHCiaSOFE0kcKJpI4UTSRwomkjhRNJHCiaSOFE0kcKJpI4UTSRwomkjhRNJHCiaSOFE0kcKJpI4UTSSp4mQfHlehpI4UTSRwomkjhRNJHCiaSOFE0kcKJpHv3giHo+xNJHCiaSOFE0kYQAP7/rXgGzRcAEVlgF3BayAAAACdkAEmDb1d/oUsvKLF9wqKKVL7hMfxLQ7y2sCo5Otjoif4+s+1NZULag7yns6W5l2prY8HKo70nQmfBQhg7p5x5AqbScjuILQCgv1hAoeV62bSDnN6xIymhiSqkpdhDgM9zZX5pceecIL0gBgjUXwoc1/0rr0w0a5qk/iP6Ev+F/fsdR5iii85tPf29J7bejJfBuApJkrd9japNtULoJNf//yz41LS3ABkB2rKrBDjR4H1Ffn9L1wqK3INjn4/lAPiSFhV2vzNdoZeMzMUeOWXADSisininlkt37YGfR7gyqIuj6iyAakw8Y+uqdgDD2XnSSoQjqQ/FrMffsEhkMkVI7I9+7jchDOnzl50nOpse2jj7XRzcZZkCGDZcuZoYfogFIX7dMNY8iwTNAmr9jYLR+PIA/7lEreXUMD/ExMoKfy9Cz7LeS0W0QA7Juk6HHYnfjRZmKQqJVhQ7xKre1Ao0FTpxgKo5PuPCxShAyN84DpWFiGohE03xK6+VwQJlVCJpEjRmFnwkw+1bOgBgoZupaTUMn7pnoLTZ7J0TtU+wSXqU3a/j5cSeKb1acWAA6b8uKprEABzY13s0ALV1m5KzcxLMaEVvz/CcoxmXr8W2jGNZVU9RiYJ9GADbrjNp4DLy5deJLTXcRPuUpM+4kvZlI+PghHI7rbNN8h10MPmNeEXVJJ/c1Wd4s/5NzWuSKgxcmR9LeUK3w3yfnNC7FcCS/uugMJ4mYxl+sLJjEGCPFWEmz5t+jZBYR+2aTpQHGhy5Yb6r09Jo/I5rpW65MyY1Ckd7HbpWBHeg9CZO8C/Yt48pNkGD3BQ+dDfrvBfLqC4t8E2mKwsLBSNdXZJOHHTiqU6nMb7oqTkiCw+jQHFSeyPNLc4o49kawwuD4/EDSWLoLwBhzg42UA7u6h6c5drKQO15fFBp49pp18c06CAgYZjuhCwENzdFKhpq1cjOTe+uT0mXbzs4ZsU/ojqv0tJENWUqyg2wAHctm1Wzhq3njBqr+boiceeif6R4Y0OOqZf8in66xGLanvfSZjSgWRkP8o98wH0oD73OHoWuAA0/75LyzFZV3ZxNnRWhPiDGxcIJZWDNGMP2VfE4laYkhnfeh2hlblBOFkGz0AY9SI0kCvP95BvPXQfY5Pg+1ZRlwfI+LUG8mqG3AmRE6gHSaTGWKfTrSH3K0buA+YFpmFOmvqnMWw/oq0JVf/vPbXJQT3PQ1Eriy8KoD7gmicXe3AkP65O83GIozI8rNJXxvmVM11u7CGNr1Pz1j3thWoaL2UEe2bLC+ADCWVpg/tKtNwHdJsHmKrXrQZ33s6deXP5Png+ZAQM8nHTJDmcGE8PGI8CljayOOif7b8pBYdwRoZuut6cq/33yAaQhXeu25PEEnCdI7gKZoJvovZWWOXsONcK5ltrOTzMnm3z/B8xezbLzOQX57hhxARj3sa7g/2i2E+1tWR0+aCf9pr5wDcxm8XrV8avHo0S/+LDp2mLXPgO89qCapT4A81LuJyozkDlJa0/bSPB/L9yPJRI3uGGn+4H9e2YP/7VjPVaQsgPevOQpWQF3dr6n7w9crCgB10irAPTKR4RcdN+67BF0eyrxibeHRJ0f/ehoRI534mRtaQ5V4CfAfd/T9pnbxkhJACq45IAmvpUmRbB7oXTz41mnFnmUod/yNID8ZWmcRR8FduKmWPZnym+HlqzdTBouErZa37/T4T6z3kM8K5Er/WIg/7NUrDXpVAJhO71ryAkgjhb+B77HarF6JKyi/E02ipyl7ibi/m8zQ/r438EUMk0RtImu5JQNIOBDTuJmlCjlZFMpCYx5SRfur07EChkWZGiTfmIdoC2XM88GB4Ef+r+vX1RjxsC/6sfpt5A1dDLjQuhe3Z2szZc9Domn7SWUDV/mqyjaT/SJyKdelfRRmz965C5KD0pGlJP0GcCgZFdy7+BxeDzpHUcbTkG5Fgu11DZTBTgMDOI8/sh2FkJPKZXKL3U+hz50MIAlMBdwYeIy5P9rIfjDfP/F+3o5WzEJXpm+CMIIacyE59POHgN3K4Vb9e5ECbeC0IOnRoPzpHUZYHcbkWRrS7vHaYvbcNrhBZe3cyc+b/WmqeFiaoh6iV/g4XATr3DHzf5gADN6aJhyMPDREkveyx2I1JDUmfIKYDqIYKXar1ZZrMClUU+/AMrZqvKb/9OPyPwKwIfOq2unv4kosxxdtEJ2uEeKurZFH5+p/YkIYy8HyMJ0lMX9mk2xzgutPsR5i6ae+cpAPhV9Sesaz8A60qSYrVgFzCQxN2gLqVTY1B4Ckit/T7OgPX7ciCGxhS1kXrDsx/os+cmeOZFbMBanaGVo9B4vtFn2E80apPoG31ha7eXX7J/8GB5Dnxz7Z5KEZgfr6irDIW6oYuJaljNoFrrowXg6joSDp21dUx3/PZyFLOkVQW6gvnVx2mJe8+yTFJAHGnLwHhZ4prPLocGOGpR9fAGwbs7Fh9CWSQubVw79En6bG4opu8FHG9OKgq+/COgRBKodQYhYqJe5BIda4VpsvOVeNhxdSQhOFPKGPfzSJVP3mWbAsdm6RNRi+5uAtRXDH11B9leE2hVyakS81Rsf1dl96BEQSRy0Bz4n5kKfJxEFcqd/dd7ryQ3NHwpnC3+WCP8TGrQbRz+bAfNbxbaWBGg6ROthhcZWBI2hIhHcHv7TJr0vUiT7Mqt/hFHAI3SYDtNQhyVLxUBHfaJCZITdBl4foYRFoMWqoLKPMAJS3RpAGKz4qycgPtL/07JlhH1vK1LsHBY0Kvg4V+7uB5vePHehmnTfG1wnSLN5maxu9aToulB6U/aSDX5Gx1VLQYVObPthv+WK0ICSzM/I8hsiv9oYKojTxXhwAuP/hS0gH/hT8JVhdETnLCK60e4PHVvdQPSCYCfSFzkhgrpq0ichcxze34HrOgexeMnM9RtRds+NsYna0vIol45wvdWA+6PgKicdO8X38/Jnb/GMjtgR4bxvM2630+eCrXxxubLNji3bniuxY7iYaM8wn6FVnpJl0KsFu3kC9zkeMoGn9VIPw8kr9m/FQI+VqGnOVfWLpwmTrQ7SqLZZC7+Ae0nfJogbjQSX4JqxUPp5R7UfJ4l2R3cWPs5/Rh3j7CcdMNMbPeyM1kvfTGbgzMsnkdRoPUBkemBq1g8I2OMguDfzggo++rDjN0tLdSVvdNF81hvhHr8UGzU+GgbGBwLShf+7adufkI16JHSn+A/fBfS5Rhhhtke5dsYDkjm8WgxORioscsklWSXtMUK5pOIrFc6eYaEdpYf5tApHngeh7zuHUWTAMX8f1xrj4mFVVq86Io+rJRNbN7+ZAR0wM8i7TP2eW8Tfu1dD1SoGZ845u28grhSXgHpyRk4U51eQZeyKeWzsIi3WrXvRiuestJmSbuW9XkZDfBRka+672eZRrXlKRgl9KY7AkTeQx0UA9TrePLCUO8Mg9rV8r4MnELGe0s4EqFFpgDTT/RjaT9V/9GudbGWOzyiXq9Xj+3gx6yCHqemPHc9r8HB6KhWotmJgnsKb1b73iNxc8KIID+dndiHIyspXb9Dc1V7ggZVtO49ta5hgfyKvlDN9B0CYQr0dJL47JQbfNQKkFgJAXxmRb2dHd02J4VFQlE3Fcv7E3pRmLxVI/zmHpmqk9nqCigCKIZgKjzx4R8sNPMuXzGIVzeiUnZNX/Eh8rJA4SjWb4ltb0KFdCMf0vaVpaPDz6OAXZjugVGW8mV8zaD6ioqFjerfVwyEsaLbeUyP0zVg1F8sDj/RJPTemSzcDgInGvNtiU9+bDlSgNMl+GJ24fMCGZglzKHDKHlQTxAXNDU3L5ZoX6UOwRsoqno52kxzFpfaenkgHejtTm6n9MTXHNubQygI3/DxudL6DWB08O2nG55AwFazijgNX1KK/t85R3JXrzziZ07X9aPw42laygk0auM1RvJHRbN92tE76+yQrNfEamXxFApLpA3DVXG/jhtpSs1BVFK5Nydo/jfGBm6LfEzXfdVGqsZbiGh1NyYzx3Xbh9DgUcYf8xvZFklqkUfbkvt2gA8aOsIi+UEk2pd1UL+HCqIPgTPgKgSDRH5tT82Kl8lR0hdZ/2jdyyxdnDwtTd4+ywb5vODY7rRnzSovHBBvczMkPY0vmOjj7si+4x+yafspH9esYceSrZgokm/kTAWcdNn31Vxqs0/nBqDqsRLN1G/whmbQRkxRQ0uZND8FZi4cJtfyKms2yvzwXqeBgyB0ttRgOpO6mEIZ420/2s9D2oxM9aybbfmzrUU8meJsgcBNXAUgzKXdRTcWb2nxIDvA0w/9smFpbNZwgHeiPpLyUwrOhVNI/wR7TJC0MU4U4UJKyPc5YIfRiYZgz6tfGBJZFEtMEltnHJ1iPfy4APvAxOmppqrQN2n31hVh3iCUM4vv76oBIlcOtB6f452jE7OF8nrbAOGbj7MlUaGninlqifBdLea/YngT+/GvQ5wQcj4GQiH4eGli2ymvNUEv/gPKgM4dSoXEeIn+EESolT3DHtvPRJlo/L/qGhgXWYVc0PTuB73YQJ/k0YW6u/VqodzOivN+IqJhteAA5LFrH4gnyicPy0lJW9wE2Tf35onTPgnPKSuZKn5sNKwbbKpdxnHk4l9aO5Q8wjflBVROqnddONYxpGMtKwYyZitByLFSs0hkTvNyPxGu32gKBUmdr6mcFOqGs63keQPLKsynmcqG7oG+o8RUt8nU69OkEDxQ5MqnqPPjinSV/kCqSsWCtuwRk9TLJtxS1ATQa+UiJJv1w3MMDFC4pXNHyLAz8ZuUYVeg9WYaQimHw/QZP/MZqg6zl6yD0VPGtL65f8OWhVYc2tm1Lya850fG1VjV60n4qf3GCyfI1iPb7Mj//2c3v0uRa5LyvmbaYnToYk0VmLEJf4Sibv5xh4jXQfjSKSUD1TFm9AgpRFumYT4LlpQDOFtESPtHCqUW3/t6wwjcOfL1zVEvsorHXpu89nDnN6IDWbLaNjF65aiurwTbUbDHSKdkzDBA1OzHaMH7Qx6LFubGKh0SB5vhswqggew65NXVKVDKEWfjKLkbnu98owAqDICRQYd4ZQSWf3T3MrxBETUnebmpFO1IemUimvwc+KXLO2xujGa7gTIZXyiOJc/TeGJ6PFsNrMPFxjS2aERoDnGZ8MrAHK0ZxEIvIYLSPknZVQzKEKKC/nZ0EeZrTQNR/u7nQ7crKYpJIJ4Qwq+cN0QNQFUWZW7j3FIUCJ/QtdlO461ZSWWHvW/VUpc6aWSSiKUu5kEcb/Vz7mWeHGuEBTfM0KWy2BrEM5fQuhV7n/9p8lhBW6ETTvScvRB/010FeNFzy+Htwq7tqMUmo2oX2dAAAAAAAAAAAAAAAAAAAAcNgAAAAAAAAAAAA">
+</head>
+<body>
+
+<div id="legalModal" class="modal">
+  <div class="modalbox">
+    <h2>Antes de usar o AeroPlan</h2>
+    <p>O AeroPlan é uma ferramenta de <b>apoio ao planejamento e comunidade de pilotos</b>. Estimativas, relatos e alertas podem estar incompletos, desatualizados ou diferentes das condições reais.</p>
+    <div class="info dangerbox"><b>Nunca use o app como única fonte para decidir se um voo é seguro.</b> Confirme sempre as condições locais, alertas oficiais, manual do fabricante, aplicativo oficial da aeronave e regulamentação aplicável.</div>
+    <p class="small">Conteúdo publicado por usuários representa experiências da comunidade e não valida automaticamente a segurança de um local.</p>
+    <div style="display:flex;gap:8px;align-items:flex-start;margin:14px 0">
+      <input id="legalAgree" type="checkbox" style="width:auto;margin-top:3px">
+      <label for="legalAgree">Li e compreendi que a decisão final de voo e a operação segura da aeronave são responsabilidade do piloto.</label>
+    </div>
+    <div id="legalError" class="small" style="color:#b91c1c;font-weight:850"></div>
+    <button id="legalContinue" class="btn primary" style="width:100%">CONTINUAR</button>
+  </div>
+</div>
+
+<div id="dangerModal" class="modal hidden">
+  <div class="modalbox">
+    <h2>⚠️ Reportar perigo</h2>
+    <div class="grid">
+      <div><label>TIPO</label><select id="dangerType">
+        <option>Fio difícil de ver</option><option>Árvore alta</option><option>Antena / torre</option>
+        <option>Guindaste / obra</option><option>Aves</option><option>Interferência / sinal ruim</option>
+        <option>Ponto ruim de decolagem</option><option>Outro</option>
+      </select></div>
+      <div><label>VALIDADE</label><select id="dangerExpiry"><option value="7">7 dias</option><option value="30" selected>30 dias</option><option value="90">90 dias</option></select></div>
+    </div>
+    <label style="margin-top:10px">DESCRIÇÃO</label><textarea id="dangerDesc" placeholder="Ex.: fio atravessando a rota, difícil de ver no fim da tarde"></textarea>
+    <div class="info">O alerta será salvo no ponto central atual do mapa Explorar. Na versão online, usuários próximos poderão confirmar “continua aqui” ou marcar como removido.</div>
+    <div class="actions"><button class="btn danger" id="saveDangerBtn">Publicar alerta</button><button class="btn soft" onclick="document.getElementById('dangerModal').classList.add('hidden')">Cancelar</button></div>
+  </div>
+</div>
+
+<div id="postModal" class="modal hidden">
+  <div class="modalbox">
+    <h2>📷 Publicar voo / imagem</h2>
+    <div class="grid">
+      <div><label>FOTO</label><input id="postImage" type="file" accept="image/*"></div>
+      <div><label>LOCALIZAÇÃO</label><select id="postLocationMode"><option value="exact">Exata</option><option value="approx">Aproximada</option><option value="hidden">Ocultar localização</option></select></div>
+    </div>
+    <img id="postPreview" class="preview hidden">
+    <label style="margin-top:10px">LEGENDA</label><textarea id="postCaption" placeholder="Conte como foi o voo, câmera, horário, vento..."></textarea>
+    <div class="grid">
+      <div><label>DRONE</label><input id="postDrone" placeholder="Ex.: DJI Mini 4 Pro"></div>
+      <div><label>ALTURA APROX. DA CAPTURA (m)</label><input id="postAltitude" type="number" min="0" value="30"></div>
+    </div>
+    <div class="actions"><button class="btn blue" id="savePostBtn">Publicar</button><button class="btn soft" onclick="document.getElementById('postModal').classList.add('hidden')">Cancelar</button></div>
+  </div>
+</div>
+
+
+<div id="loginModal" class="modal hidden">
+  <div class="modalbox loginbox">
+    <h2>👤 Entrar no AeroPlan</h2>
+    <p class="small">Acesso online do AeroPlan Beta. Seus dados de login são sincronizados pelo Supabase.</p>
+    <div class="grid">
+      <div><label>NOME</label><input id="loginName" placeholder="Seu nome"></div>
+      <div><label>@USUÁRIO</label><input id="loginHandle" placeholder="@seuperfil"></div>
+      <div><label>E-MAIL</label><input id="loginEmail" type="email" placeholder="voce@email.com"></div>
+      <div><label>SENHA</label><input id="loginPassword" type="password" placeholder="••••••••"></div>
+    </div>
+    <div class="actions">
+      <button class="btn blue" id="registerBtn">Criar conta</button>
+      <button class="btn primary" id="loginBtn">Entrar</button>
+    </div>
+    <div id="loginMsg" class="small" style="margin-top:10px"></div>
+    <div class="info">Conta online protegida por autenticação do Supabase.</div>
+  </div>
+</div>
+
+<div id="betaAccessModal" class="modal hidden"><div class="modalbox"><h2>🔐 AeroPlan Beta Fechado</h2><p class="small">Acesso individual, pessoal e intransferível. Limite de 20 testers.</p><div class="grid"><div><label>CÓDIGO DE CONVITE</label><input id="betaInviteCode" placeholder="AP-DEMO-01"></div><div><label>E-MAIL</label><input id="betaEmail" type="email"></div><div><label>NOME</label><input id="betaName"></div><div><label>SENHA</label><input id="betaPassword" type="password"></div></div><div id="betaAccessMsg" class="small" style="margin-top:8px;color:#b91c1c;font-weight:800"></div><button id="activateBetaBtn" class="btn blue" style="width:100%;margin-top:10px">ATIVAR ACESSO BETA</button><div class="info warnbox">Convite de uso único. O acesso é registrado no beta online.</div></div></div>
+<div class="app hidden" id="aeroApp">
+  
+<div class="hero">
+  <div class="hero-flex">
+    <div class="hero-text">
+      <div class="brand-logo-wrap">
+        <img class="brand-logo-img" src="data:image/webp;base64,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" alt="AeroPlan logo">
+      </div>
+      <p>Planejamento de voo + mapa colaborativo + comunidade de pilotos.</p>
+      <span class="tag">Beta Online 0.6 • “Google Maps + Waze + rede social de drones”</span>
+      <div class="userbar">
+        <span id="currentUserPill" class="userpill">Não conectado</span>
+        <button class="btn soft" id="openLoginBtn" style="padding:8px 12px">Entrar</button>
+        <button class="btn soft hidden" id="logoutBtn" style="padding:8px 12px">Sair</button>
+      </div>
+    </div>
+  </div>
+</div>
+  </div>
+</div>
+
+
+  <div class="beta-ribbon">BETA FECHADO <span class="beta-count" id="betaSeatCount">0 / 20</span></div>
+  <div class="tabs">
+    <button class="tab on" data-tab="drones">Drones</button>
+    <button class="tab" data-tab="plan">Planejar</button>
+    <button class="tab" data-tab="explore">Explorar</button>
+    <button class="tab" data-tab="community">Comunidade</button>
+    <button class="tab" data-tab="profile">Perfil</button>
+    <button class="tab hidden" id="adminTabBtn" data-tab="admin">Admin</button>
+  </div>
+
+  <section id="drones">
+    <div class="card">
+      <h2>Meus drones</h2>
+      <div id="profiles"></div>
+      <div class="actions"><button class="btn blue" id="newDroneBtn">+ Novo drone</button><button class="btn soft" id="clearProfilesBtn">Limpar</button></div>
+    </div>
+
+    <div class="card">
+      <h2>Cadastrar drone</h2>
+      <div class="grid">
+        <div><label>FABRICANTE</label><select id="brand"><option value="">Selecione</option><option>DJI</option><option>Autel</option><option>Potensic</option><option>FIMI</option><option>Outro</option></select></div>
+        <div><label>MODELO</label><select id="model"><option value="">Selecione o fabricante primeiro</option></select></div>
+      </div>
+      <div class="grid" style="margin-top:10px">
+        <div><label>NOME DO PERFIL</label><input id="profileName" placeholder="Ex.: Meu Mini 4 Pro"></div>
+        <div><label>AUTONOMIA NOMINAL (min)</label><input id="endurance" type="number" value="18"></div>
+        <div><label>RESISTÊNCIA AO VENTO (m/s)</label><input id="windResistance" type="number" value="8" step=".1"></div>
+        <div><label>VELOCIDADE DE CRUZEIRO (m/s)</label><input id="cruiseSpeed" type="number" value="6" step=".1"></div>
+        <div><label>PESO (g)</label><input id="weight" type="number" value="135"></div>
+      </div>
+      <div id="identified" class="info">Selecione fabricante e modelo para preencher automaticamente.</div>
+      <button class="btn blue" style="width:100%;margin-top:10px" id="saveDroneBtn">Salvar drone</button>
+    </div>
+  </section>
+
+  <section id="plan" class="hidden">
+    <div class="card">
+      <h2>Planejar missão</h2>
+      <div id="activeDroneBox" class="info"></div>
+      <div class="grid" style="margin-top:10px">
+        <div>
+          <label>PARTIDA</label><input id="startQuery" placeholder="Minha localização ou endereço">
+          <div class="actions"><button class="btn primary" id="gpsBtn">📍 Minha localização</button><button class="btn soft" id="searchStartBtn">Buscar</button></div>
+          <div id="startText" class="small" style="margin-top:6px">Não definida.</div>
+        </div>
+        <div>
+          <label>DESTINO</label><input id="destQuery" placeholder="Rua, praia, praça, ponto turístico...">
+          <div class="actions"><button class="btn primary" id="searchDestBtn">🔎 Buscar destino</button><button class="btn soft" id="clearDestBtn">Limpar</button></div>
+          <div id="destText" class="small" style="margin-top:6px">Não definido.</div>
+        </div>
+      </div>
+      <div id="planMap" style="margin-top:10px"></div>
+      <div class="kpis">
+        <div class="k"><span>Ida</span><b id="distanceOut">0,00 km</b></div>
+        <div class="k"><span>Total</span><b id="distanceTotal">0,00 km</b></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Condições do voo</h2>
+      <div class="grid">
+        <div><label>ALTURA (m)</label><input id="altitude" type="number" value="30"></div>
+        <div><label>FILMAGEM PARADA (min)</label><input id="filming" type="number" value="2" step=".5"></div>
+        <div><label>BATERIA INICIAL (%)</label><input id="battery" type="number" value="100"></div>
+        <div><label>RESERVA (%)</label><input id="reserve" type="number" value="30"></div>
+        <div><label>VENTO (km/h)</label><input id="windSpeed" type="number" value="0" step=".1"></div>
+        <div><label>RAJADA (km/h)</label><input id="gust" type="number" value="0" step=".1"></div>
+        <div><label>DIREÇÃO DO VENTO (°)</label><input id="windDir" type="number" value="0"></div>
+        <div><label>MARGEM TÉCNICA (%)</label><input id="safetyFactor" type="number" value="20"></div>
+      </div>
+      <div class="actions"><button class="btn primary" id="weatherBtn">🌬️ Buscar vento</button><button class="btn good" id="calculateBtn">CALCULAR MISSÃO</button></div>
+      <div id="weatherText" class="small" style="margin-top:7px">Preencha manualmente ou busque o vento automaticamente.</div>
+    </div>
+
+    <div class="card">
+      <h2>Resultado</h2>
+      <div id="noResult" class="small">Nenhum cálculo realizado.</div>
+      <div id="result" class="hidden">
+        <div id="status" class="status">—</div>
+        <div class="kpis">
+          <div class="k"><span>Tempo</span><b id="rTime">—</b></div>
+          <div class="k"><span>Bateria pouso</span><b id="rBattery">—</b></div>
+          <div class="k"><span>Margem</span><b id="rMargin">—</b></div>
+          <div class="k"><span>Vento x limite</span><b id="rWind">—</b></div>
+        </div>
+        <div id="analysis" class="info"></div>
+        <div class="info warnbox">Resultado estimado para planejamento. A decisão final continua sendo do piloto.</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="explore" class="hidden">
+    <div class="card">
+      <h2>Explorar mapa</h2>
+      <div class="layerbar">
+        <button class="chip on" data-layer="alerts">⚠️ Perigos</button>
+        <button class="chip on" data-layer="photos">📷 Fotos</button>
+        <button class="chip on" data-layer="spots">🛫 Flight Spots</button>
+      </div>
+      <div id="exploreMap" style="margin-top:10px"></div>
+      <div class="actions"><button class="btn danger" id="reportDangerBtn">⚠️ Reportar perigo</button><button class="btn blue" id="publishPhotoBtn">📷 Publicar voo/foto</button></div>
+      <div class="info">As camadas sociais ficam separadas do mapa de planejamento para não atrapalhar a leitura da rota.</div>
+    </div>
+
+    <div class="card">
+      <h2>Flight Spots</h2>
+      <div id="spotsList"></div>
+    </div>
+  </section>
+
+  <section id="community" class="hidden">
+    <div class="card">
+      <h2>Comunidade</h2>
+      <div class="layerbar">
+        <button class="chip on" data-feed="nearby">Perto de mim</button>
+        <button class="chip" data-feed="following">Seguindo</button>
+        <button class="chip" data-feed="popular">Mais curtidos</button>
+      </div>
+      <div id="feed"></div>
+    </div>
+  </section>
+
+  <section id="profile" class="hidden">
+    <div class="card">
+      <h2>Conta</h2>
+      <div id="accountStatus" class="info">Você ainda não entrou.</div>
+      <div class="actions">
+        <button class="btn primary" id="profileLoginBtn">Entrar / criar conta</button>
+        <button class="btn soft hidden" id="profileLogoutBtn">Sair da conta</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Meu perfil</h2>
+      <div class="grid">
+        <div><label>NOME</label><input id="userName" value="Piloto AeroPlan"></div>
+        <div><label>@USUÁRIO</label><input id="userHandle" value="@piloto"></div>
+      </div>
+      <button class="btn primary" style="width:100%;margin-top:10px" id="saveProfileBtn">Salvar perfil</button>
+      <div class="info">No protótipo, perfil, posts e alertas ficam salvos somente neste navegador. Para virar rede social real, entraremos com login + banco de dados na nuvem.</div>
+    </div>
+
+    <div class="card">
+      <h2>Resumo</h2>
+      <div class="kpis">
+        <div class="k"><span>Drones</span><b id="profileDrones">0</b></div>
+        <div class="k"><span>Posts</span><b id="profilePosts">0</b></div>
+        <div class="k"><span>Alertas</span><b id="profileAlerts">0</b></div>
+        <div class="k"><span>Spots</span><b id="profileSpots">3</b></div>
+      </div>
+    </div>
+  </section>
+
+<section id="admin" class="hidden"><div class="card"><h2>AeroPlan Admin — Beta Fechado</h2><div class="admin-grid"><div class="admin-card"><span>Vagas ocupadas</span><b id="admSeats">0 / 20</b></div><div class="admin-card"><span>Ativos 7 dias</span><b id="admActive7">0</b></div><div class="admin-card"><span>Planejamentos</span><b id="admCalculations">0</b></div><div class="admin-card"><span>Feedbacks</span><b id="admFeedbacks">0</b></div></div><div class="actions"><button class="btn blue" id="generateInviteBtn">+ Gerar convite</button><button class="btn soft" id="exportBetaBtn">Exportar dados</button></div><div id="newInviteBox" class="info hidden"></div></div><div class="card"><h2>Testers</h2><div class="tablewrap"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Status</th><th>Último acesso</th><th>Cálculos</th><th>Posts</th><th>Alertas</th><th>Ação</th></tr></thead><tbody id="testersBody"></tbody></table></div></div><div class="card"><h2>Convites</h2><div class="tablewrap"><table><thead><tr><th>Código</th><th>E-mail</th><th>Status</th><th>Criado</th><th>Ação</th></tr></thead><tbody id="invitesBody"></tbody></table></div></div><div class="card"><h2>Atividade recente</h2><div id="telemetryList" class="small"></div></div><div class="card"><h2>Feedback do beta</h2><div class="grid"><div><label>USARIA ANTES DE UM VOO?</label><select id="fbUse"><option>Sim</option><option>Talvez</option><option>Não</option></select></div><div><label>PAGARIA PELO PRO?</label><select id="fbPay"><option>R$ 9,90/mês</option><option>R$ 14,90/mês</option><option>R$ 19,90/mês</option><option>Não pagaria</option></select></div></div><label style="margin-top:10px">O QUE FALTOU / ERROU?</label><textarea id="fbText"></textarea><button class="btn primary" id="sendFeedbackBtn" style="width:100%;margin-top:10px">Enviar feedback</button><div id="feedbackList" class="small" style="margin-top:10px"></div></div></section>
+  <div class="footer">AeroPlan Beta Online 0.6. Não afiliado a fabricantes de drones. Alertas comunitários não substituem informações oficiais nem inspeção visual.</div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(() => {
+'use strict';
+const $=id=>document.getElementById(id);
+const STORE={legal:'ap03_legal',profiles:'ap03_profiles',active:'ap03_active',posts:'ap03_posts',alerts:'ap03_alerts',profile:'ap03_profile',users:'ap03_users',currentUser:'ap03_current_user'};
+const DB={
+ DJI:{"Neo":{endurance:18,wind:8,cruise:6,weight:135},"Mini 4 Pro":{endurance:34,wind:10.7,cruise:10,weight:249},"Mini 3":{endurance:38,wind:10.7,cruise:10,weight:248},"Air 3":{endurance:46,wind:12,cruise:12,weight:720},"Avata 2":{endurance:23,wind:10.7,cruise:12,weight:377}},
+ Autel:{"EVO Nano+":{endurance:28,wind:10.7,cruise:10,weight:249},"EVO Lite+":{endurance:40,wind:12,cruise:11,weight:835}},
+ Potensic:{"ATOM":{endurance:32,wind:10.7,cruise:10,weight:249}},FIMI:{"X8 Mini V2":{endurance:31,wind:10.7,cruise:10,weight:245}}
+};
+let profiles=JSON.parse(localStorage.getItem(STORE.profiles)||'[]'),activeId=localStorage.getItem(STORE.active)||'';
+let posts=JSON.parse(localStorage.getItem(STORE.posts)||'[]'),alerts=JSON.parse(localStorage.getItem(STORE.alerts)||'[]');
+let start=null,dest=null,startM=null,destM=null,line=null,lastResult=null,postImageData='';
+let users=JSON.parse(localStorage.getItem(STORE.users)||'[]');
+let currentUser=JSON.parse(localStorage.getItem(STORE.currentUser)||'null');
+if(!users.some(u=>u.email==='admin@aeroplan.local')){users.push({id:'ADMIN',name:'Administrador AeroPlan',handle:'@admin',email:'admin@aeroplan.local',password:'admin123'});localStorage.setItem(STORE.users,JSON.stringify(users));}
+
+function saveUsers(){localStorage.setItem(STORE.users,JSON.stringify(users))}
+function saveCurrentUser(){if(currentUser)localStorage.setItem(STORE.currentUser,JSON.stringify(currentUser));else localStorage.removeItem(STORE.currentUser)}
+function updateUserUI(){
+  // Legacy local-auth UI disabled. Supabase is the single source of truth.
+}
+function openLogin(){ $('loginModal').classList.remove('hidden'); $('loginMsg').textContent=''; }
+function closeLogin(){ $('loginModal').classList.add('hidden'); }
+function normalizeHandle(v){v=(v||'').trim(); if(!v) return ''; return v.startsWith('@')?v:'@'+v;}
+
+
+$('legalContinue').onclick=()=>{if(!$('legalAgree').checked){$('legalError').textContent='Marque a confirmação para continuar.';return}localStorage.setItem(STORE.legal,JSON.stringify({version:'0.3',acceptedAt:new Date().toISOString()}));$('legalModal').classList.add('hidden')};
+if(localStorage.getItem(STORE.legal))$('legalModal').classList.add('hidden');
+$('openLoginBtn').onclick=openLogin;
+$('profileLoginBtn').onclick=openLogin;
+$('logoutBtn').onclick=()=>{currentUser=null;saveCurrentUser();updateUserUI();};
+$('profileLogoutBtn').onclick=()=>{currentUser=null;saveCurrentUser();updateUserUI();};
+$('loginModal').addEventListener('click',e=>{ if(e.target.id==='loginModal') closeLogin(); });
+
+$('registerBtn').onclick=()=>{
+  const name=$('loginName').value.trim(), handle=normalizeHandle($('loginHandle').value), email=$('loginEmail').value.trim().toLowerCase(), password=$('loginPassword').value;
+  if(!name||!email||!password){$('loginMsg').textContent='Preencha nome, e-mail e senha.'; return;}
+  if(users.some(u=>u.email===email)){$('loginMsg').textContent='Já existe uma conta local com esse e-mail.'; return;}
+  const user={id:String(Date.now()),name,handle:handle||'@piloto',email,password};
+  users.push(user); saveUsers(); currentUser={id:user.id,name:user.name,handle:user.handle,email:user.email}; saveCurrentUser(); updateUserUI();
+  $('loginMsg').textContent='Conta criada com sucesso.'; closeLogin();
+};
+$('loginBtn').onclick=()=>{
+  const email=$('loginEmail').value.trim().toLowerCase(), password=$('loginPassword').value;
+  const user=users.find(u=>u.email===email && u.password===password);
+  if(!user){$('loginMsg').textContent='E-mail ou senha inválidos.'; return;}
+  currentUser={id:user.id,name:user.name,handle:user.handle,email:user.email}; saveCurrentUser(); updateUserUI(); closeLogin();
+};
+
+
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>showTab(b.dataset.tab,b));
+function showTab(id,b){['drones','plan','explore','community','profile','admin'].forEach(x=>$(x).classList.add('hidden'));$(id).classList.remove('hidden');document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));b.classList.add('on');if(id==='plan')setTimeout(()=>planMap.invalidateSize(),100);if(id==='explore'){setTimeout(()=>exploreMap.invalidateSize(),100);renderExplore()}if(id==='community')renderFeed();if(id==='profile')renderProfileStats()}
+
+const planMap=L.map('planMap').setView([-22.9068,-43.1729],11);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(planMap);
+const exploreMap=L.map('exploreMap').setView([-22.9068,-43.1729],11);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(exploreMap);
+const alertLayer=L.layerGroup().addTo(exploreMap),photoLayer=L.layerGroup().addTo(exploreMap),spotLayer=L.layerGroup().addTo(exploreMap);
+
+const spots=[
+ {name:'Mirante Dona Marta',lat:-22.9458,lon:-43.1966,desc:'Vista urbana e montanhas. Verifique vento e restrições antes do voo.',rating:4.7,flights:128},
+ {name:'Praia da Reserva',lat:-23.0125,lon:-43.4190,desc:'Litoral aberto; atenção a vento e pessoas.',rating:4.5,flights:96},
+ {name:'Parque Olímpico',lat:-22.9767,lon:-43.3923,desc:'Área ampla, mas condições e permissões devem ser verificadas.',rating:4.2,flights:62}
+];
+
+function populateModels(){const b=$('brand').value;$('model').innerHTML='';if(!b){$('model').innerHTML='<option value="">Selecione o fabricante primeiro</option>';return}if(b==='Outro'){$('model').innerHTML='<option>Personalizado</option>';return} $('model').innerHTML='<option value="">Selecione</option>'+Object.keys(DB[b]||{}).map(x=>`<option>${x}</option>`).join('')}
+$('brand').onchange=populateModels;
+$('model').onchange=()=>{const b=$('brand').value,m=$('model').value,d=DB[b]?.[m];if(!d)return;$('endurance').value=d.endurance;$('windResistance').value=d.wind;$('cruiseSpeed').value=d.cruise;$('weight').value=d.weight;if(!$('profileName').value)$('profileName').value=`${b} ${m}`;$('identified').innerHTML=`Identificado: <b>${b} ${m}</b> • autonomia ${d.endurance} min • vento ${d.wind} m/s • cruzeiro ${d.cruise} m/s • ${d.weight} g`};
+
+$('saveDroneBtn').onclick=()=>{const b=$('brand').value,m=$('model').value;if(!b||!m)return alert('Selecione fabricante e modelo.');const p={id:String(Date.now()),name:$('profileName').value.trim()||`${b} ${m}`,brand:b,model:m,endurance:+$('endurance').value||1,wind:+$('windResistance').value||0,cruise:+$('cruiseSpeed').value||1,weight:+$('weight').value||0};profiles.push(p);activeId=p.id;localStorage.setItem(STORE.profiles,JSON.stringify(profiles));localStorage.setItem(STORE.active,activeId);renderProfiles();renderActive();alert('Drone salvo.')};
+$('newDroneBtn').onclick=()=>{$('brand').value='';populateModels();$('profileName').value='';$('identified').textContent='Selecione fabricante e modelo para preencher automaticamente.'};
+$('clearProfilesBtn').onclick=()=>{if(confirm('Apagar drones cadastrados?')){profiles=[];activeId='';localStorage.removeItem(STORE.profiles);localStorage.removeItem(STORE.active);renderProfiles();renderActive()}};
+function renderProfiles(){const box=$('profiles');box.innerHTML=profiles.length?profiles.map(p=>`<div class="profile ${p.id===activeId?'active':''}"><b>${p.name}</b><div class="small">${p.brand} ${p.model} • ${p.endurance} min • vento ${p.wind} m/s</div><div class="actions"><button class="btn ${p.id===activeId?'good':'soft'}" data-use="${p.id}">${p.id===activeId?'Ativo':'Usar'}</button><button class="btn danger" data-del="${p.id}">Excluir</button></div></div>`).join(''):'<div class="small">Nenhum drone cadastrado.</div>';box.querySelectorAll('[data-use]').forEach(b=>b.onclick=()=>{activeId=b.dataset.use;localStorage.setItem(STORE.active,activeId);renderProfiles();renderActive()});box.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{profiles=profiles.filter(p=>p.id!==b.dataset.del);if(activeId===b.dataset.del)activeId=profiles[0]?.id||'';localStorage.setItem(STORE.profiles,JSON.stringify(profiles));localStorage.setItem(STORE.active,activeId);renderProfiles();renderActive()})}
+function activeDrone(){return profiles.find(p=>p.id===activeId)||null}
+function renderActive(){const p=activeDrone();$('activeDroneBox').innerHTML=p?`Drone ativo: <b>${p.name}</b> — ${p.brand} ${p.model}, autonomia ${p.endurance} min, vento ${p.wind} m/s.`:'<b>Nenhum drone ativo.</b> Cadastre um drone.'}
+
+function rad(x){return x*Math.PI/180}function deg(x){return x*180/Math.PI}
+function hav(a,b,c,d){const R=6371000,dp=rad(c-a),dl=rad(d-b),q=Math.sin(dp/2)**2+Math.cos(rad(a))*Math.cos(rad(c))*Math.sin(dl/2)**2;return 2*R*Math.atan2(Math.sqrt(q),Math.sqrt(1-q))}
+function bearing(a,b,c,d){const y=Math.sin(rad(d-b))*Math.cos(rad(c)),x=Math.cos(rad(a))*Math.sin(rad(c))-Math.sin(rad(a))*Math.cos(rad(c))*Math.cos(rad(d-b));return(deg(Math.atan2(y,x))+360)%360}
+function diff(a,b){let d=Math.abs(a-b)%360;return d>180?360-d:d}
+function setStart(lat,lon,label){start={lat:+lat,lon:+lon,label};if(startM)startM.setLatLng([lat,lon]);else startM=L.marker([lat,lon],{draggable:true}).addTo(planMap);$('startText').textContent='📍 '+label;draw()}
+function setDest(lat,lon,label){dest={lat:+lat,lon:+lon,label};if(destM)destM.setLatLng([lat,lon]);else destM=L.marker([lat,lon],{draggable:true}).addTo(planMap);$('destText').textContent='🎯 '+label;draw()}
+function draw(){if(line){planMap.removeLayer(line);line=null}if(start&&dest){line=L.polyline([[start.lat,start.lon],[dest.lat,dest.lon]],{weight:4}).addTo(planMap);planMap.fitBounds(line.getBounds(),{padding:[30,30]});const d=hav(start.lat,start.lon,dest.lat,dest.lon);$('distanceOut').textContent=(d/1000).toFixed(2).replace('.',',')+' km';$('distanceTotal').textContent=(d*2/1000).toFixed(2).replace('.',',')+' km'}}
+async function geo(q){const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=5&q='+encodeURIComponent(q),{headers:{'Accept-Language':'pt-BR'}});const a=await r.json();if(!a.length)throw 0;return a[0]}
+$('gpsBtn').onclick=()=>navigator.geolocation.getCurrentPosition(p=>{setStart(p.coords.latitude,p.coords.longitude,'Minha localização');planMap.setView([p.coords.latitude,p.coords.longitude],16)},()=>alert('Não consegui acessar o GPS.'));
+$('searchStartBtn').onclick=async()=>{try{const x=await geo($('startQuery').value.trim());setStart(x.lat,x.lon,x.display_name)}catch{alert('Partida não encontrada.')}};
+$('searchDestBtn').onclick=async()=>{try{const x=await geo($('destQuery').value.trim());setDest(x.lat,x.lon,x.display_name)}catch{alert('Destino não encontrado.')}};
+$('clearDestBtn').onclick=()=>{dest=null;if(destM){planMap.removeLayer(destM);destM=null}if(line){planMap.removeLayer(line);line=null}$('destText').textContent='Não definido.';$('distanceOut').textContent='0,00 km';$('distanceTotal').textContent='0,00 km'};
+
+$('weatherBtn').onclick=async()=>{if(!start)return alert('Defina a partida primeiro.');try{const u=`https://api.open-meteo.com/v1/forecast?latitude=${start.lat}&longitude=${start.lon}&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m&wind_speed_unit=kmh`;const r=await fetch(u),d=await r.json(),c=d.current;$('windSpeed').value=c.wind_speed_10m||0;$('windDir').value=c.wind_direction_10m||0;$('gust').value=c.wind_gusts_10m||0;$('weatherText').textContent=`Vento ${$('windSpeed').value} km/h • direção ${$('windDir').value}° • rajada ${$('gust').value} km/h.`}catch{alert('Vento automático indisponível.')}};
+
+$('calculateBtn').onclick=()=>{const p=activeDrone();if(!p)return alert('Cadastre e selecione um drone.');if(!start||!dest)return alert('Defina partida e destino.');const D=hav(start.lat,start.lon,dest.lat,dest.lon),br=bearing(start.lat,start.lon,dest.lat,dest.lon),B=Math.max(1,Math.min(100,+$('battery').value||100)),res=Math.max(10,+$('reserve').value||30),film=Math.max(0,+$('filming').value||0),sf=Math.max(0,+$('safetyFactor').value||20)/100,ws=Math.max(0,+$('windSpeed').value||0),gs=Math.max(ws,+$('gust').value||0),wd=((+$('windDir').value||0)%360+360)%360,wm=ws/3.6,blow=(wd+180)%360,comp=wm*Math.cos(rad(diff(blow,br))),out=Math.max(1.5,p.cruise+comp),back=Math.max(1.5,p.cruise-comp),travel=(D/out+D/back)/60,usable=p.endurance*(1-sf),limit=p.wind*3.6,penalty=1+Math.min(.65,ws/Math.max(20,limit*1.5))+Math.min(.25,gs/100),total=travel*penalty+film,landing=Math.max(0,B-total*(100/usable)),margin=landing-res;let state='FAVORÁVEL',cls='safe';if(margin<10){state='ATENÇÃO';cls='tight'}if(margin<0||ws>limit||gs>limit*1.25){state='NÃO RECOMENDADA';cls='bad'}$('status').textContent=state;$('status').className='status '+cls;$('rTime').textContent=total.toFixed(1).replace('.',',')+' min';$('rBattery').textContent=landing.toFixed(0)+'%';$('rMargin').textContent=(margin>=0?'+':'')+margin.toFixed(0)+' p.p.';$('rWind').textContent=ws.toFixed(0)+' / '+limit.toFixed(0)+' km/h';$('analysis').innerHTML=`<b>${p.name}</b><br>${(D*2/1000).toFixed(2)} km totais • autonomia considerada ${usable.toFixed(1)} min • vento ${ws.toFixed(1)} km/h • rajada ${gs.toFixed(1)} km/h.`;$('result').classList.remove('hidden');$('noResult').classList.add('hidden');lastResult={state,total,landing}};
+
+$('reportDangerBtn').onclick=()=>$('dangerModal').classList.remove('hidden');
+$('saveDangerBtn').onclick=()=>{const c=exploreMap.getCenter(),days=+$('dangerExpiry').value||30;alerts.unshift({id:String(Date.now()),type:$('dangerType').value,desc:$('dangerDesc').value.trim(),lat:c.lat,lon:c.lng,created:Date.now(),expires:Date.now()+days*86400000,confirms:0});localStorage.setItem(STORE.alerts,JSON.stringify(alerts));$('dangerModal').classList.add('hidden');$('dangerDesc').value='';renderExplore();renderProfileStats();alert('Alerta publicado no protótipo.')};
+
+$('publishPhotoBtn').onclick=()=>{$('postModal').classList.remove('hidden');const p=activeDrone();$('postDrone').value=p?`${p.brand} ${p.model}`:''};
+$('postImage').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{postImageData=r.result;$('postPreview').src=postImageData;$('postPreview').classList.remove('hidden')};r.readAsDataURL(f)};
+$('savePostBtn').onclick=()=>{const mode=$('postLocationMode').value,c=exploreMap.getCenter();let lat=null,lon=null;if(mode==='exact'){lat=c.lat;lon=c.lng}else if(mode==='approx'){lat=Math.round(c.lat*100)/100;lon=Math.round(c.lng*100)/100}posts.unshift({id:String(Date.now()),image:postImageData,caption:$('postCaption').value.trim(),drone:$('postDrone').value.trim(),alt:+$('postAltitude').value||0,mode,lat,lon,created:new Date().toLocaleString('pt-BR'),likes:0,user:(currentUser?.handle||$('userHandle').value||'@piloto')});localStorage.setItem(STORE.posts,JSON.stringify(posts));$('postModal').classList.add('hidden');$('postCaption').value='';$('postImage').value='';$('postPreview').classList.add('hidden');postImageData='';renderExplore();renderFeed();renderProfileStats();alert('Publicado no protótipo local.')};
+
+document.querySelectorAll('[data-layer]').forEach(b=>b.onclick=()=>{b.classList.toggle('on');renderExplore()});
+function renderExplore(){
+ alertLayer.clearLayers();photoLayer.clearLayers();spotLayer.clearLayers();
+ const showA=document.querySelector('[data-layer="alerts"]').classList.contains('on'),showP=document.querySelector('[data-layer="photos"]').classList.contains('on'),showS=document.querySelector('[data-layer="spots"]').classList.contains('on');
+ const now=Date.now();alerts=alerts.filter(a=>a.expires>now);localStorage.setItem(STORE.alerts,JSON.stringify(alerts));
+ if(showA)alerts.forEach(a=>L.circleMarker([a.lat,a.lon],{radius:9,weight:2}).bindPopup(`<b>⚠️ ${a.type}</b><br>${a.desc||'Sem descrição'}<br><small>Confirmações: ${a.confirms||0}</small>`).addTo(alertLayer));
+ if(showP)posts.filter(p=>p.lat!=null).forEach(p=>L.circleMarker([p.lat,p.lon],{radius:8,weight:2}).bindPopup(`<b>📷 ${p.drone||'Post da comunidade'}</b><br>${p.caption||''}`).addTo(photoLayer));
+ if(showS)spots.forEach(s=>L.marker([s.lat,s.lon]).bindPopup(`<b>🛫 ${s.name}</b><br>${s.desc}<br>⭐ ${s.rating} • ${s.flights} voos registrados`).addTo(spotLayer));
+ $('spotsList').innerHTML=spots.map(s=>`<div class="spot"><b>${s.name}</b> <span class="badge spot">Flight Spot</span><div class="small">${s.desc}</div><div class="meta" style="margin-top:6px"><span class="badge">⭐ ${s.rating}</span><span class="badge">${s.flights} voos</span></div></div>`).join('');
+}
+
+function renderFeed(){
+ const demo=posts.length?[]:[
+  {id:'demo1',image:'',caption:'Fim de tarde com vento leve e ótima visibilidade.',drone:'DJI Mini 4 Pro',alt:45,created:'Hoje',likes:34,user:'@aeropiloto'},
+  {id:'demo2',image:'',caption:'Lugar bonito, mas atenção a aves no começo da manhã.',drone:'DJI Neo',alt:28,created:'Ontem',likes:21,user:'@voacomigo'}
+ ];
+ const all=[...posts,...demo];
+ $('feed').innerHTML=all.length?all.map(p=>`<div class="post"><div><b>${p.user||'@piloto'}</b> <span class="badge photo">📷 voo</span></div>${p.image?`<img src="${p.image}">`:''}<div style="margin-top:7px">${p.caption||'Sem legenda.'}</div><div class="meta" style="margin-top:7px"><span class="badge">${p.drone||'Drone não informado'}</span><span class="badge">${p.alt||0} m</span><span class="badge">❤️ ${p.likes||0}</span><span class="badge">${p.created||''}</span></div></div>`).join(''):'<div class="small">Nenhum post.</div>';
+}
+
+$('saveProfileBtn').onclick=()=>{const data={name:$('userName').value,handle:$('userHandle').value};localStorage.setItem(STORE.profile,JSON.stringify(data)); if(currentUser){ currentUser.name=data.name; currentUser.handle=data.handle; const idx=users.findIndex(u=>u.id===currentUser.id); if(idx>=0){users[idx].name=data.name; users[idx].handle=data.handle; saveUsers();} saveCurrentUser(); updateUserUI(); } alert('Perfil salvo.')};
+const savedProf=JSON.parse(localStorage.getItem(STORE.profile)||'null');if(savedProf){$('userName').value=savedProf.name||'';$('userHandle').value=savedProf.handle||''}
+function renderProfileStats(){$('profileDrones').textContent=profiles.length;$('profilePosts').textContent=posts.length;$('profileAlerts').textContent=alerts.length;$('profileSpots').textContent=spots.length}
+
+renderProfiles();renderActive();renderExplore();renderFeed();renderProfileStats();updateUserUI();
+
+const BETA_LIMIT=20, ADMIN_EMAIL='admin@aeroplan.local';
+let betaInvites=JSON.parse(localStorage.getItem('ap04_invites')||'[]'),betaTesters=JSON.parse(localStorage.getItem('ap04_testers')||'[]'),telemetry=JSON.parse(localStorage.getItem('ap04_telemetry')||'[]'),feedbacks=JSON.parse(localStorage.getItem('ap04_feedback')||'[]');
+function bp(){localStorage.setItem('ap04_invites',JSON.stringify(betaInvites));localStorage.setItem('ap04_testers',JSON.stringify(betaTesters));localStorage.setItem('ap04_telemetry',JSON.stringify(telemetry));localStorage.setItem('ap04_feedback',JSON.stringify(feedbacks));}
+function did(){let x=localStorage.getItem('ap04_device');if(!x){x='DEV-'+Math.random().toString(36).slice(2,10).toUpperCase();localStorage.setItem('ap04_device',x)}return x}
+function blog(type,meta={}){telemetry.unshift({type,meta,user:currentUser?.email||'guest',at:new Date().toISOString(),device:did()});telemetry=telemetry.slice(0,500);bp();updateSeats()}
+function updateSeats(){const n=betaTesters.filter(t=>t.status==='active').length;if($('betaSeatCount'))$('betaSeatCount').textContent=n+' / '+BETA_LIMIT}
+function bt(){return currentUser?betaTesters.find(t=>t.email===currentUser.email&&t.status==='active'):null}
+function starter(){if(!betaInvites.length){for(let i=1;i<=5;i++)betaInvites.push({code:'AP-DEMO-'+String(i).padStart(2,'0'),email:'',status:'available',created:new Date().toISOString()});bp()}}
+starter();
+$('activateBetaBtn').onclick=()=>{const code=$('betaInviteCode').value.trim().toUpperCase(),email=$('betaEmail').value.trim().toLowerCase(),name=$('betaName').value.trim(),password=$('betaPassword').value;const inv=betaInvites.find(i=>i.code===code&&i.status==='available'&&(!i.email||i.email===email));if(!inv){$('betaAccessMsg').textContent='Convite inválido ou já usado.';return}if(betaTesters.filter(t=>t.status==='active').length>=BETA_LIMIT){$('betaAccessMsg').textContent='As 20 vagas estão ocupadas.';return}if(!email||!name||!password){$('betaAccessMsg').textContent='Preencha todos os campos.';return}let u=users.find(u=>u.email===email);if(!u){u={id:String(Date.now()),name,handle:'@'+name.toLowerCase().replace(/\s+/g,''),email,password};users.push(u);saveUsers()}currentUser={id:u.id,name:u.name,handle:u.handle,email:u.email};saveCurrentUser();betaTesters.push({id:String(Date.now()),name,email,status:'active',invite:code,deviceId:did(),created:new Date().toISOString(),lastAccess:new Date().toISOString(),calculations:0,posts:0,alerts:0});inv.status='used';inv.usedBy=email;bp();updateUserUI();updateSeats();$('betaAccessModal').classList.add('hidden');blog('beta_activated')};
+function renderAdmin(){if(currentUser?.email!==ADMIN_EMAIL){$('admin').innerHTML='<div class="card"><h2>Acesso restrito</h2><div class="info dangerbox">Somente o administrador pode acessar.</div></div>';return}const active=betaTesters.filter(t=>t.status==='active');$('admSeats').textContent=active.length+' / '+BETA_LIMIT;$('admActive7').textContent=active.filter(t=>Date.now()-new Date(t.lastAccess||0).getTime()<=7*86400000).length;$('admCalculations').textContent=betaTesters.reduce((s,t)=>s+(t.calculations||0),0);$('admFeedbacks').textContent=feedbacks.length;$('testersBody').innerHTML=betaTesters.length?betaTesters.map(t=>`<tr><td>${t.name||''}</td><td>${t.email}</td><td><span class="status-pill ${t.status==='active'?'st-active':'st-blocked'}">${t.status}</span></td><td>${t.lastAccess?new Date(t.lastAccess).toLocaleString('pt-BR'):'—'}</td><td>${t.calculations||0}</td><td>${t.posts||0}</td><td>${t.alerts||0}</td><td><button class="btn danger" style="padding:7px" onclick="window.apBlock('${t.id}')">Bloquear</button> <button class="btn soft" style="padding:7px" onclick="window.apRelease('${t.id}')">Liberar</button></td></tr>`).join(''):'<tr><td colspan="8">Nenhum tester.</td></tr>';$('invitesBody').innerHTML=betaInvites.map(i=>`<tr><td><span class="invite-code">${i.code}</span></td><td>${i.email||'—'}</td><td>${i.status}</td><td>${new Date(i.created).toLocaleDateString('pt-BR')}</td><td><button class="btn danger" style="padding:7px" onclick="window.apRevoke('${i.code}')">Revogar</button></td></tr>`).join('');$('telemetryList').innerHTML=telemetry.length?telemetry.slice(0,50).map(e=>`<div class="item"><b>${e.type}</b> • ${e.user}<br>${new Date(e.at).toLocaleString('pt-BR')}</div>`).join(''):'Nenhuma atividade.';$('feedbackList').innerHTML=feedbacks.length?feedbacks.map(f=>`<div class="item"><b>${f.user}</b> • usaria: ${f.use} • pagaria: ${f.pay}<br>${f.text||''}</div>`).join(''):'Nenhum feedback.'}
+window.apBlock=id=>{const t=betaTesters.find(x=>x.id===id);if(t){t.status='blocked';bp();blog('tester_blocked',{email:t.email});renderAdmin()}};window.apRelease=id=>{const t=betaTesters.find(x=>x.id===id);if(t){t.status='blocked';const i=betaInvites.find(i=>i.code===t.invite);if(i)i.status='available';bp();blog('seat_released',{email:t.email});renderAdmin()}};window.apRevoke=code=>{const i=betaInvites.find(x=>x.code===code);if(i){i.status='revoked';bp();renderAdmin()}};
+$('generateInviteBtn').onclick=()=>{const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let code='AP-';for(let g=0;g<3;g++){if(g)code+='-';for(let i=0;i<4;i++)code+=chars[Math.floor(Math.random()*chars.length)]}const email=(prompt('E-mail do convidado (opcional):','')||'').trim().toLowerCase();betaInvites.unshift({code,email,status:'available',created:new Date().toISOString()});bp();$('newInviteBox').classList.remove('hidden');$('newInviteBox').innerHTML='Convite criado: <span class="invite-code">'+code+'</span>';renderAdmin()};
+$('exportBetaBtn').onclick=()=>{const blob=new Blob([JSON.stringify({betaInvites,betaTesters,telemetry,feedbacks},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='aeroplan-beta-export.json';a.click()};
+$('sendFeedbackBtn').onclick=()=>{if(!currentUser)return alert('Entre primeiro.');feedbacks.unshift({user:currentUser.email,use:$('fbUse').value,pay:$('fbPay').value,text:$('fbText').value.trim(),at:new Date().toISOString()});bp();blog('feedback_sent');$('fbText').value='';renderAdmin();alert('Feedback enviado.')};
+updateSeats();
+
+})();
+</script>
+
+<div id="backendStatus" style="position:fixed;right:10px;bottom:10px;z-index:9998;background:#111827;color:white;padding:8px 11px;border-radius:999px;font:700 11px system-ui;box-shadow:0 5px 15px #0003">
+  Beta Online: aguardando configuração do Supabase
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+window.AEROPLAN_CONFIG = {
+  SUPABASE_URL: "https://iznigywjowhhtzlzmxpp.supabase.co",
+  SUPABASE_PUBLISHABLE_KEY: "sb_publishable__-N5uUmrbwoyaLJbph7f0g_Kd8fCir-",
+  ADMIN_EMAIL: "luana.llluana@gmail.com",
+  BETA_LIMIT: 20
+};
+
+</script>
+<script>
+
+(() => {
+  'use strict';
+  const cfg = window.AEROPLAN_CONFIG || {};
+  const $ = (id) => document.getElementById(id);
+  const status = $('backendStatus');
+  const client = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_PUBLISHABLE_KEY);
+  window.AeroPlanCloud = { supabase: client };
+
+  let cloudUser = null;
+  let cloudAccess = null;
+
+  const deviceId = () => {
+    let id = localStorage.getItem('aeroplan_cloud_device');
+    if (!id) {
+      id = 'DEV-' + crypto.randomUUID();
+      localStorage.setItem('aeroplan_cloud_device', id);
+    }
+    return id;
+  };
+
+  function setStatus(text, ok=true) {
+    if (!status) return;
+    status.textContent = text;
+    status.style.background = ok ? '#166534' : '#991b1b';
+  }
+
+  function msg(id, text, error=false) {
+    const el=$(id); if(!el) return;
+    el.textContent=text;
+    el.style.color=error ? '#b91c1c' : '#166534';
+    el.style.fontWeight='800';
+  }
+
+  function show(el){ if(el) el.classList.remove('hidden'); }
+  function hide(el){ if(el) el.classList.add('hidden'); }
+
+  async function getAccess(){
+    const {data,error}=await client.rpc('get_my_beta_access');
+    if(error) throw error;
+    cloudAccess=data || {};
+    return cloudAccess;
+  }
+
+  async function refreshUI(){
+    const {data:{session}}=await client.auth.getSession();
+    cloudUser=session?.user || null;
+
+    const pill=$('currentUserPill'), openBtn=$('openLoginBtn'), outBtn=$('logoutBtn'),
+          pLogin=$('profileLoginBtn'), pLogout=$('profileLogoutBtn'), acc=$('accountStatus'),
+          adminBtn=$('adminTabBtn');
+
+    if(!cloudUser){
+      hide($('aeroApp'));
+      if(pill) pill.textContent='Não conectado';
+      show(openBtn); hide(outBtn); show(pLogin); hide(pLogout); hide(adminBtn);
+      if(acc) acc.textContent='Você ainda não entrou.';
+      setStatus('Beta Online: pronto para login');
+      return;
+    }
+
+    try { await getAccess(); } catch(e) { cloudAccess={}; }
+
+    const authorized = !!(cloudAccess?.is_admin || cloudAccess?.is_tester);
+    if (authorized) {
+      show($('aeroApp'));
+      hide($('betaAccessModal'));
+      hide($('loginModal'));
+    } else {
+      hide($('aeroApp'));
+      show($('betaAccessModal'));
+    }
+
+    const name=cloudUser.user_metadata?.display_name || cloudUser.email;
+    if(pill) pill.textContent='Conectado como '+name;
+    hide(openBtn); show(outBtn); hide(pLogin); show(pLogout);
+    if(acc) acc.innerHTML=`Conectado como <b>${name}</b> • ${cloudUser.email}`;
+    if($('userName')) $('userName').value=name || '';
+    if($('userHandle') && !$('userHandle').value) $('userHandle').value='@piloto';
+
+    if(cloudAccess?.is_admin) show(adminBtn); else hide(adminBtn);
+
+    setStatus(cloudAccess?.is_admin ? 'Beta Online: Admin conectado' : 'Beta Online: conectado');
+
+    // User is authenticated but still hasn't redeemed an invite.
+    if(!cloudAccess?.is_admin && !cloudAccess?.is_tester){
+      hide($('aeroApp'));
+      show($('betaAccessModal'));
+      if($('betaEmail')) $('betaEmail').value=cloudUser.email || '';
+      if($('betaPassword')) $('betaPassword').value='';
+      if($('betaEmail')) $('betaEmail').readOnly=true;
+    } else {
+      hide($('betaAccessModal'));
+    }
+  }
+
+  async function signIn(){
+    const email=($('loginEmail')?.value||'').trim().toLowerCase();
+    const password=$('loginPassword')?.value||'';
+    msg('loginMsg','Entrando...');
+    const {error}=await client.auth.signInWithPassword({email,password});
+    if(error){msg('loginMsg',error.message,true);return}
+    hide($('loginModal'));
+    await refreshUI();
+    await client.rpc('log_beta_event',{p_event_type:'login',p_event_data:{device_id:deviceId()}}).catch(()=>{});
+  }
+
+  async function createAccount(){
+    const email=($('loginEmail')?.value||'').trim().toLowerCase();
+    const password=$('loginPassword')?.value||'';
+    const name=($('loginName')?.value||'').trim();
+    if(!email||!password||!name){msg('loginMsg','Preencha nome, e-mail e senha.',true);return}
+
+    // Normal testers should create through an invite. Admin can bootstrap directly.
+    if(email !== (cfg.ADMIN_EMAIL||'').toLowerCase()){
+      hide($('loginModal'));
+      show($('betaAccessModal'));
+      $('betaEmail').value=email;
+      $('betaName').value=name;
+      $('betaPassword').value=password;
+      msg('betaAccessMsg','Digite o código de convite para concluir o cadastro.');
+      return;
+    }
+
+    msg('loginMsg','Criando conta administrativa...');
+    const {data,error}=await client.auth.signUp({
+      email,password,
+      options:{
+        data:{display_name:name},
+        emailRedirectTo:'https://aeroplan-beta.onrender.com'
+      }
+    });
+    if(error){msg('loginMsg',error.message,true);return}
+    if(!data.session){
+      msg('loginMsg','Conta criada. Confirme o e-mail recebido e depois clique em Entrar.');
+      return;
+    }
+    hide($('loginModal'));
+    await refreshUI();
+  }
+
+  async function activateInvite(){
+    const code=($('betaInviteCode')?.value||'').trim().toUpperCase();
+    const email=($('betaEmail')?.value||'').trim().toLowerCase();
+    const name=($('betaName')?.value||'').trim();
+    const password=$('betaPassword')?.value||'';
+    if(!code||!email||!name){msg('betaAccessMsg','Preencha convite, e-mail e nome.',true);return}
+
+    let {data:{session}}=await client.auth.getSession();
+    if(!session){
+      if(!password){msg('betaAccessMsg','Crie uma senha para sua conta.',true);return}
+      msg('betaAccessMsg','Criando sua conta...');
+      const signup=await client.auth.signUp({
+        email,password,
+        options:{
+          data:{display_name:name},
+          emailRedirectTo:'https://aeroplan-beta.onrender.com'
+        }
+      });
+      if(signup.error){msg('betaAccessMsg',signup.error.message,true);return}
+      session=signup.data.session;
+      if(!session){
+        localStorage.setItem('aeroplan_pending_invite',JSON.stringify({code,name}));
+        msg('betaAccessMsg','Conta criada. Confirme o e-mail recebido e depois entre normalmente. Seu convite ficará reservado neste aparelho.');
+        return;
+      }
+    }
+
+    msg('betaAccessMsg','Ativando convite...');
+    const redeem=await client.rpc('redeem_beta_invite',{
+      p_code:code,p_display_name:name,p_device_id:deviceId()
+    });
+    if(redeem.error){
+      const map={
+        'INVALID_INVITE':'Convite inválido ou já utilizado.',
+        'INVITE_EMAIL_MISMATCH':'Este convite foi destinado a outro e-mail.',
+        'BETA_FULL':'As 20 vagas do beta já estão ocupadas.'
+      };
+      const key=Object.keys(map).find(k=>(redeem.error.message||'').includes(k));
+      msg('betaAccessMsg', key ? map[key] : redeem.error.message, true);
+      return;
+    }
+    localStorage.removeItem('aeroplan_pending_invite');
+    hide($('betaAccessModal'));
+    await refreshUI();
+  }
+
+  async function redeemPending(){
+    const pending=JSON.parse(localStorage.getItem('aeroplan_pending_invite')||'null');
+    if(!pending || !cloudUser) return;
+    const r=await client.rpc('redeem_beta_invite',{
+      p_code:pending.code,
+      p_display_name:pending.name||cloudUser.user_metadata?.display_name||'Tester',
+      p_device_id:deviceId()
+    });
+    if(!r.error) localStorage.removeItem('aeroplan_pending_invite');
+  }
+
+  async function renderCloudAdmin(){
+    if(!cloudAccess?.is_admin) return;
+    const [profiles,testers,invites,events,feedback] = await Promise.all([
+      client.from('beta_profiles').select('*').order('created_at',{ascending:false}),
+      client.from('beta_testers').select('*').order('joined_at',{ascending:false}),
+      client.from('beta_invites').select('*').order('created_at',{ascending:false}),
+      client.from('beta_events').select('*').order('created_at',{ascending:false}).limit(100),
+      client.from('beta_feedback').select('*').order('created_at',{ascending:false})
+    ]);
+    for(const r of [profiles,testers,invites,events,feedback]) if(r.error) throw r.error;
+
+    const profileById=Object.fromEntries(profiles.data.map(p=>[p.id,p]));
+    const active=testers.data.filter(t=>t.status==='active');
+    if($('admSeats')) $('admSeats').textContent=`${active.length} / ${cfg.BETA_LIMIT}`;
+    const week=Date.now()-7*86400000;
+    if($('admActive7')) $('admActive7').textContent=active.filter(t=>new Date(t.last_access).getTime()>=week).length;
+    if($('admCalculations')) $('admCalculations').textContent=testers.data.reduce((s,t)=>s+(t.calculations||0),0);
+    if($('admFeedbacks')) $('admFeedbacks').textContent=feedback.data.length;
+    if($('betaSeatCount')) $('betaSeatCount').textContent=`${active.length} / ${cfg.BETA_LIMIT}`;
+
+    if($('testersBody')) $('testersBody').innerHTML = testers.data.length ? testers.data.map(t=>{
+      const p=profileById[t.user_id]||{};
+      return `<tr><td>${esc(p.display_name||'')}</td><td>${esc(p.email||'')}</td>
+      <td><span class="status-pill ${t.status==='active'?'st-active':'st-blocked'}">${esc(t.status)}</span></td>
+      <td>${t.last_access?new Date(t.last_access).toLocaleString('pt-BR'):'—'}</td>
+      <td>${t.calculations||0}</td><td>${t.posts||0}</td><td>${t.alerts||0}</td>
+      <td><button class="btn danger cloud-block" data-id="${t.user_id}" style="padding:7px">Bloquear</button>
+      <button class="btn soft cloud-active" data-id="${t.user_id}" style="padding:7px">Ativar</button></td></tr>`;
+    }).join('') : '<tr><td colspan="8">Nenhum tester ainda.</td></tr>';
+
+    if($('invitesBody')) $('invitesBody').innerHTML=invites.data.map(i=>`<tr>
+      <td><span class="invite-code">${esc(i.code)}</span></td><td>${esc(i.invited_email||'—')}</td>
+      <td>${esc(i.status)}</td><td>${new Date(i.created_at).toLocaleDateString('pt-BR')}</td><td>—</td></tr>`).join('');
+
+    if($('telemetryList')) $('telemetryList').innerHTML=events.data.length ? events.data.map(e=>{
+      const p=profileById[e.user_id]||{};
+      return `<div class="item"><b>${esc(e.event_type)}</b> • ${esc(p.email||'usuário')}<br>${new Date(e.created_at).toLocaleString('pt-BR')}</div>`;
+    }).join('') : 'Nenhuma atividade.';
+
+    if($('feedbackList')) $('feedbackList').innerHTML=feedback.data.length ? feedback.data.map(f=>{
+      const p=profileById[f.user_id]||{};
+      return `<div class="item"><b>${esc(p.email||'usuário')}</b> • usaria: ${esc(f.would_use||'—')} • pagaria: ${esc(f.price_choice||'—')}<br>${esc(f.message||'')}</div>`;
+    }).join('') : 'Nenhum feedback.';
+
+    document.querySelectorAll('.cloud-block').forEach(b=>b.onclick=()=>setTesterStatus(b.dataset.id,'blocked'));
+    document.querySelectorAll('.cloud-active').forEach(b=>b.onclick=()=>setTesterStatus(b.dataset.id,'active'));
+  }
+
+  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  async function setTesterStatus(userId,statusValue){
+    const r=await client.rpc('admin_set_tester_status',{p_user_id:userId,p_status:statusValue});
+    if(r.error){alert(r.error.message);return}
+    await renderCloudAdmin();
+  }
+
+  async function createInvite(){
+    const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code='AP-';
+    for(let g=0;g<3;g++){if(g)code+='-';for(let i=0;i<4;i++) code+=chars[Math.floor(Math.random()*chars.length)]}
+    const email=(prompt('E-mail do convidado (opcional):','')||'').trim().toLowerCase();
+    const r=await client.rpc('admin_create_invite',{p_code:code,p_email:email});
+    if(r.error){alert(r.error.message);return}
+    if($('newInviteBox')){
+      show($('newInviteBox'));
+      $('newInviteBox').innerHTML=`Convite criado: <span class="invite-code">${code}</span>${email?` para <b>${esc(email)}</b>`:''}`;
+    }
+    await renderCloudAdmin();
+  }
+
+  async function sendFeedback(){
+    if(!cloudUser){alert('Entre primeiro.');return}
+    const r=await client.from('beta_feedback').insert({
+      user_id:cloudUser.id,
+      would_use:$('fbUse')?.value||'',
+      price_choice:$('fbPay')?.value||'',
+      message:($('fbText')?.value||'').trim()
+    });
+    if(r.error){alert(r.error.message);return}
+    if($('fbText')) $('fbText').value='';
+    alert('Feedback enviado.');
+    if(cloudAccess?.is_admin) await renderCloudAdmin();
+  }
+
+  async function log(type,data={}){
+    if(!cloudUser) return;
+    await client.rpc('log_beta_event',{p_event_type:type,p_event_data:data}).catch(()=>{});
+  }
+  window.AeroPlanCloud.log=log;
+
+  // Replace local-auth handlers with cloud-auth handlers.
+  if($('loginBtn')) $('loginBtn').onclick=signIn;
+  if($('registerBtn')) $('registerBtn').onclick=createAccount;
+  if($('activateBetaBtn')) $('activateBetaBtn').onclick=activateInvite;
+  if($('logoutBtn')) $('logoutBtn').onclick=async()=>{await client.auth.signOut();await refreshUI()};
+  if($('profileLogoutBtn')) $('profileLogoutBtn').onclick=async()=>{await client.auth.signOut();await refreshUI()};
+  if($('generateInviteBtn')) $('generateInviteBtn').onclick=createInvite;
+  if($('sendFeedbackBtn')) $('sendFeedbackBtn').onclick=sendFeedback;
+
+  // Give first-time users a way back to login.
+  const box=$('betaAccessModal')?.querySelector('.modalbox');
+  if(box && !$('betaExistingLogin')){
+    const b=document.createElement('button');
+    b.id='betaExistingLogin'; b.className='btn soft'; b.style='width:100%;margin-top:8px';
+    b.textContent='JÁ TENHO CONTA';
+    b.onclick=()=>{hide($('betaAccessModal'));show($('loginModal'))};
+    box.appendChild(b);
+  }
+
+  // Intercept Admin tab to refresh live cloud data.
+  if($('adminTabBtn')){
+    $('adminTabBtn').addEventListener('click',()=>setTimeout(()=>renderCloudAdmin().catch(e=>alert(e.message)),50));
+  }
+
+  // Redirect visible text away from "local".
+  document.querySelectorAll('.footer,.info,.small').forEach(el=>{
+    if(el.textContent.includes('protótipo local')) el.textContent=el.textContent.replace(/protótipo local/gi,'beta online');
+  });
+
+  client.auth.onAuthStateChange(async()=>{await refreshUI()});
+  (async()=>{
+    await refreshUI();
+    if(cloudUser){
+      await redeemPending();
+      await refreshUI();
+      if(cloudAccess?.is_admin) await renderCloudAdmin().catch(()=>{});
+    } else {
+      // First visit: invite activation is the default entry point.
+      show($('betaAccessModal'));
+    }
+  })();
+})();
+
+</script>
+</body>
+</html>
